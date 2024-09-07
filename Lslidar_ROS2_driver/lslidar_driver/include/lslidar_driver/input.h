@@ -19,11 +19,12 @@
 #ifndef __LSLIDAR_INPUT_H_
 #define __LSLIDAR_INPUT_H_
 
+#include "lslidar_log.h"
+#include "rclcpp/rclcpp.hpp"
 #include <unistd.h>
 #include <stdio.h>
 #include <pcap.h>
 #include <netinet/in.h>
-#include "rclcpp/rclcpp.hpp"
 #include <lslidar_msgs/msg/lslidar_packet.hpp>
 #include <lslidar_msgs/msg/lslidar_point.hpp>
 #include <lslidar_msgs/msg/lslidar_scan.hpp>
@@ -40,7 +41,7 @@
 
 namespace lslidar_driver {
     static uint16_t MSOP_DATA_PORT_NUMBER = 2368;   // lslidar default data port on PC
-    static uint16_t DIFOP_DATA_PORT_NUMBER = 2369;  // lslidar default difop data port on PC
+    //static uint16_t DIFOP_DATA_PORT_NUMBER = 2369;  // lslidar default difop data port on PC
 /**
  *  从在线的网络数据或离线的网络抓包数据（pcap文件）中提取出lidar的原始数据，即packet数据包
  * @brief The Input class,
@@ -53,7 +54,7 @@ namespace lslidar_driver {
  */
     class Input {
     public:
-        Input(rclcpp::Node* private_nh, uint16_t port);
+        Input(rclcpp::Node* private_nh, uint16_t port, int packet_size);
 
         virtual ~Input() {
         }
@@ -65,24 +66,21 @@ namespace lslidar_driver {
         rclcpp::Node*  private_nh_;
         uint16_t port_;
         std::string devip_str_;
-        int cur_rpm_;
         int return_mode_;
         bool npkt_update_flag_;
         bool add_multicast;
         std::string group_ip;
         int packet_size_;
-
     };
 
 /** @brief Live lslidar input from socket. */
     class InputSocket : public Input {
     public:
-        InputSocket(rclcpp::Node*  private_nh, uint16_t port = MSOP_DATA_PORT_NUMBER);
+        InputSocket(rclcpp::Node*  private_nh, uint16_t port = MSOP_DATA_PORT_NUMBER,int packet_size = 1212);
 
         virtual ~InputSocket();
 
         virtual int getPacket(lslidar_msgs::msg::LslidarPacket::UniquePtr &pkt);
-
 
     private:
         int sockfd_;
@@ -96,7 +94,7 @@ namespace lslidar_driver {
    */
     class InputPCAP : public Input {
     public:
-        InputPCAP(rclcpp::Node* private_nh, uint16_t port = MSOP_DATA_PORT_NUMBER, double packet_rate = 0.0,
+        InputPCAP(rclcpp::Node* private_nh, uint16_t port = MSOP_DATA_PORT_NUMBER, int packet_size = 1212, double packet_rate = 0.0,
                   std::string filename = "");
 
 //        InputPCAP(rclcpp::Node* private_nh, uint16_t port = MSOP_DATA_PORT_NUMBER, double packet_rate = 0.0,

@@ -17,7 +17,7 @@ set(libpcap_LIBRARIES -lpcap)
 #set(FastRTPS_LIBRARY_RELEASE /opt/ros/foxy/lib/libfastrtps.so)
 
 find_package(Boost REQUIRED)
-#find_package(angles REQUIRED)
+find_package(angles REQUIRED)
 find_package(PCL REQUIRED)
 find_package(lslidar_msgs REQUIRED)
 find_package(ament_cmake REQUIRED)
@@ -27,29 +27,30 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(pcl_conversions REQUIRED)
-#find_package(diagnostic_updater REQUIRED)
 find_package(PkgConfig REQUIRED)
 
 include_directories(
 		include
 		${PCL_INCLUDE_DIRS}
-#		${Boost_INCLUDE_DIRS}
+		${Boost_INCLUDE_DIRS}
 )
 
+
 # c16 Node
-add_executable(lslidar_c16driver_node src/lslidar_c16driver_node.cpp src/lslidar_driver.cpp src/input.cpp)
-target_link_libraries(lslidar_c16driver_node ${rclcpp_LIBRARIES} ${libpcap_LIBRARIES} ${Boost_LIBRARIES})   #${Boost_LIBRARIES}
-ament_target_dependencies(lslidar_c16driver_node rclcpp std_msgs lslidar_msgs sensor_msgs  pcl_conversions)
+add_executable(lslidar_driver_node src/lslidar_driver_node.cpp src/lslidar_driver.cpp src/input.cpp)
+target_link_libraries(lslidar_driver_node ${rclcpp_LIBRARIES} ${libpcap_LIBRARIES} ${Boost_LIBRARIES})
+ament_target_dependencies(lslidar_driver_node rclcpp std_msgs lslidar_msgs sensor_msgs pcl_conversions)
 
 install(DIRECTORY launch params rviz_cfg
 		DESTINATION share/${PROJECT_NAME})
 
 install(TARGETS
-		lslidar_c16driver_node
+		lslidar_driver_node
 		DESTINATION lib/${PROJECT_NAME}
 		)
 
 ament_export_dependencies(rclcpp std_msgs lslidar_msgs sensor_msgs pcl_conversions)
 ament_export_include_directories(include ${PCL_COMMON_INCLUDE_DIRS})
 
+add_definitions("-D${PROJECT_NAME}_VERSION=\"${${PROJECT_NAME}_VERSION}\"")
 ament_package()

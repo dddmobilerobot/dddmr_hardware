@@ -12,26 +12,26 @@ import subprocess
 
 
 def generate_launch_description():
-    driver_dir = os.path.join(get_package_share_directory('lslidar_driver'), 'params', 'lslidar_c16.yaml')
-    rviz_dir = os.path.join(get_package_share_directory('lslidar_driver'), 'rviz_cfg', 'lslidar_c16.rviz')
+    driver_dir = os.path.join(get_package_share_directory('lslidar_driver'), 'params', 'lslidar_cx.yaml')
+    rviz_dir = os.path.join(get_package_share_directory('lslidar_driver'), 'rviz_cfg', 'lslidar_cx.rviz')
 
     p = subprocess.Popen("echo $ROS_DISTRO", stdout=subprocess.PIPE, shell=True)
     driver_node = ""
     rviz_node = ""
     ros_version = p.communicate()[0]
-    print(ros_version)
+    #print(ros_version)
     if ros_version == b'dashing\n' or ros_version == b'eloquent\n':
         print("ROS VERSION: dashing/eloquent")
         driver_node = LifecycleNode(package='lslidar_driver',
-                                    node_namespace='c16',
-                                    node_executable='lslidar_c16driver_node',
+                                    node_namespace='cx',
+                                    node_executable='lslidar_driver_node',
                                     node_name='lslidar_driver_node',
                                     output='screen',
                                     parameters=[driver_dir],
                                     )
         rviz_node = Node(
             package='rviz2',
-            node_namespace='c16',
+            node_namespace='cx',
             node_executable='rviz2',
             node_name='rviz2',
             arguments=['-d', rviz_dir],
@@ -39,8 +39,8 @@ def generate_launch_description():
     elif ros_version == b'foxy\n' or ros_version == b'galactic\n' or ros_version == b'humble\n':
         print("ROS VERSION: foxy/galactic/humble")
         driver_node = LifecycleNode(package='lslidar_driver',
-                                    namespace='c16',
-                                    executable='lslidar_c16driver_node',
+                                    namespace='cx',
+                                    executable='lslidar_driver_node',
                                     name='lslidar_driver_node',
                                     output='screen',
                                     emulate_tty=True,
@@ -48,7 +48,7 @@ def generate_launch_description():
                                     )
         rviz_node = Node(
             package='rviz2',
-            namespace='c16',
+            namespace='cx',
             executable='rviz2',
             name='rviz2',
             arguments=['-d', rviz_dir],

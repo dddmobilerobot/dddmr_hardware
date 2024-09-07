@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(lslidar_msgs)
 
-set(CMAKE_BUILD_TYPE Release)    #RelWithDebInfo00
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
     set(CMAKE_C_STANDARD 99)
@@ -32,7 +31,14 @@ rosidl_generate_interfaces(lslidar_msgs
         "msg/LslidarPacket.msg"
         "msg/LslidarPoint.msg"
         "msg/LslidarScan.msg"
-        "srv/Lslidarcontrol.srv"
+        "srv/DataIp.srv"
+        "srv/DataPort.srv"
+        "srv/DestinationIp.srv"
+        "srv/DevPort.srv"
+        "srv/LslidarControl.srv"
+        "srv/MotorControl.srv"
+        "srv/MotorSpeed.srv"
+        "srv/TimeService.srv"
         DEPENDENCIES builtin_interfaces std_msgs sensor_msgs
         )
 

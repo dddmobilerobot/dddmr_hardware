@@ -1,7 +1,9 @@
-# LSLIDAR_CX_V3.0.4_221228_ROS2
+# LSLIDAR_CX_V4.2.4_240410_ROS2
 
 ## 1.Introduction
-​		LSLIDAR_CX_V3.0.4_221228_ROS2 is the lidar ros driver in linux environment, which is suitable for c16/c32 lidar(1212bytes ,version 2.6/2.8/3.0). The program has  tested under ubuntu18.04 ros dashing , ubuntu18.04 ros eloquent, ubuntu 20.04 ros foxy , ubuntu 20.04 ros galactic and ubuntu 22.04 ros humble .
+​		LSLIDAR_CX_V4.2.4_240410_ROS2 is the lidar ros driver in linux environment,.The program has been tested successfully under ubuntu 22.04 ROS humble,ubuntu20.04 ROS foxy, and ubuntu20.04 ROS galactic, ubuntu18.04 ROS dashing, and ubuntu18.04 ROS eloquent.
+
+​		Applicable to C16,C32 3.0 version and C1, C1Plus, C4, C8, C8f, CKM8, C16, MSC16, C16 domestic, C32, C32W, C32WN,C32Wb,C32WP, CH32R 4.0 version and n301 5.5 version lidars.
 
 ## 2.Dependencies
 
@@ -25,7 +27,7 @@ To run lidar driver in ROS environment, ROS related libraries need to be install
 
 ```bash
 # install
-sudo apt-get install ros-$ROS_DISTRO-pcl-ros ros-$ROS_DISTRO-pluginlib  ros-$ROS_DISTRO-pcl-conversions
+sudo apt-get install ros-$ROS_DISTRO-pcl-ros ros-$ROS_DISTRO-pluginlib  ros-$ROS_DISTRO-pcl-conversions 
 ```
 
 3.other dependencies
@@ -53,64 +55,55 @@ source install/setup.bash
 
 ### 3.2 Run
 
-run with single c32 lidar(It is divided into 1212 bytes lidar and 1206 bytes lidar. Pay attention to modify lslidar_driver/params/lslidar_c32.yaml when start  lidar driver) :
+run with single lidar:
 
 ~~~bash
-ros2 launch lslidar_driver lslidar_c32_launch.py
+ros2 launch lslidar_driver lslidar_cx_launch.py
+ros2 launch lslidar_driver lslidar_cx_rviz_launch.py		#Automatically load rviz
 ~~~
 
-run with double c32 lidar(It is divided into 1212 bytes lidar and 1206 bytes lidar. Pay attention to modify lslidar_driver/params/lslidar_c32_1.yaml and  lslidar_c32_2.yaml  when start  lidar  driver) :
+run with double lidar:
 
 ~~~bash
-ros2 launch lslidar_driver lslidar_c32_double_launch.py
+ros2 launch lslidar_driver lslidar_double_launch.py
+ros2 launch lslidar_driver lslidar_double_rviz_launch.py	#Automatically load rviz
 ~~~
 
-
-
-run with single c16 lidar(It is divided into 1212 bytes lidar and 1206 bytes lidar. Pay attention to modify lslidar_driver/params/lslidar_c16.yaml when start  lidar driver) :
+run with four lidar:
 
 ~~~bash
-ros2 launch lslidar_driver lslidar_c16_launch.py
-~~~
-
-run with double c16 lidar(It is divided into 1212 bytes lidar and 1206 bytes lidar. Pay attention to modify lslidar_driver/params/lslidar_c16_1.yaml and  lslidar_c16_2.yaml  when start lidar  driver) :
-
-~~~bash
-ros2 launch lslidar_driver lslidar_c16_double_launch.py
+ros2 launch lslidar_driver lslidar_four_launch.py
 ~~~
 
 
 
 ## 4. Introduction to parameters
 
-The content of the lslidar_c32.yaml file is as follows, and the meaning of each parameter is shown in the notes.
+The content of the lslidar_cx.yaml file is as follows, and the meaning of each parameter is shown in the notes.
 
 ~~~bash
-/c32/lslidar_driver_node:
+/cx/lslidar_driver_node:
   ros__parameters:
-    packet_size: 1206                       #lidar data packet length (bytes)，write 1212 or 1206 
-    device_ip: 192.168.1.200                #lidar ip
-    msop_port: 2368                         # Main data Stream Output Protocol packet port
-    difop_port: 2369                        # Device Information Output Protocol packet port
-    frame_id: laser_link                    # lidar point cloud coordinate system name
-    add_multicast: false                    # Whether to add multicast
-    group_ip: 224.1.1.2                     #multicast ip
-    use_gps_ts: true                        # Whether gps time synchronization
-    lidar_type: c32                         #c16:c16 lidar；c32:c32 lidar
-    c16_type: c16_2                         #c16_2:lidar with vertical angular resolution of 2 degrees，c16_1:lidar with vertical angular resolution of 1.33 degrees
-    c32_type: c32_2                         #c32_2:lidar with vertical angular resolution of 1 degrees ，c32_1:lidar with vertical angular resolution of 2 degrees
-    c32_fpga_type: 3                        #3:lidar with fpga version 2.7\2.8\3.0 ，2:lidar with fpga version 2.6
-    min_range: 0.3                          #Unit: m. The minimum value of the lidar blind area, points smaller than this value are filtered
-    max_range: 200.0                        #Unit: m. The maximum value of the lidar blind area, points smaller than this value are filtered
-    distance_unit: 0.4                      #lidar range resolution
-    angle_disable_min: 0                    #lidar clipping angle start value ，unit:0.01°
-    angle_disable_max: 0                    #lidar clipping angle end value ，unit:0.01°
-    scan_num: 16                            #laserscan line number
-    topic_name: lslidar_point_cloud         #point cloud topic name, can be modified
-    publish_scan: false                     #Whether to publish the scan
-    pcl_type: false                         #pointcloud type，false: xyzirt,true:xyzi
-    coordinate_opt: false                   #Default false. The zero degree angle of the lidar corresponds to the direction of the point cloud
-    #pcap: /home/chris/Documents/leishen/1212bytes_c32/gps.pcap                        #Uncomment to read the data from the pcap file, and add the comment to read the data from the lidar
+    packet_rate: 1695.0            #Number of packets played per second when playing pcap
+    device_ip: 192.168.1.200       # lidar ip
+    msop_port: 2368                # Main data Stream Output Protocol packet port
+    difop_port: 2369               # Device Information Output Protocol packet port
+    pcl_type: false                # pointcloud type，false: xyzirt,true:xyzi
+    add_multicast: false           # Whether to add multicast
+    group_ip: 224.1.1.2            # multicast ip
+    use_time_service: true         # Whether gps time synchronization
+    min_range: 0.15                # Unit: m. The minimum value of the lidar blind area, points smaller than this value are filtered
+    max_range: 200.0               # Unit: m. The maximum value of the lidar blind area, points smaller than this value are filtered
+    angle_disable_min: 0           # lidar clipping angle start value ，unit:0.01° Fill in integers
+    angle_disable_max: 0           # lidar clipping angle end value ，unit:0.01° Fill in integers
+    distance_unit: 0.4             # lidar range resolution
+    horizontal_angle_resolution: 0.18  #10Hz:0.18  20Hz:0.36  5Hz: 0.09
+    frame_id: laser_link           # lidar point cloud coordinate system name
+    topic_name: lslidar_point_cloud     # point cloud topic name, can be modified
+    publish_scan: false                 # Whether to publish the scan
+    scan_num: 15                   # laserscan line number
+    coordinate_opt: false               # Default false. The zero degree angle of the lidar corresponds to the direction of the point cloud
+    #pcap: /home/ls/Documents/xxx.pcap  # Uncomment to read the data from the pcap file, and add the comment to read the data from the lidar
 ~~~
 
 ### Multicast mode:
@@ -164,55 +157,183 @@ The content of the lslidar_c32.yaml file is as follows, and the meaning of each 
   pcl::PointCloud<pcl::PointXYZI>
   ~~~
 
+
+
+### Modify lidar time service mode:
+
+source install/setup.bash
+
+GPS：
+
+~~~bash
+ros2 service call /xx/time_service lslidar_msgs/srv/TimeService "{time_service_mode: 'gps',ntp_ip: ''}"   #Note: xx is the namespace, such as cx
+~~~
+
+PTP：(lidar that supports this function)
+
+~~~bash
+ros2 service call /xx/time_service lslidar_msgs/srv/TimeService "{time_service_mode: 'ptp',ntp_ip: ''}"  #Note: xx is the namespace, such as cx
+~~~
+
+NTP：(lidar that supports this function)
+
+~~~bash
+ros2 service call /xx/time_service lslidar_msgs/srv/TimeService "{time_service_mode: 'ntp',ntp_ip: '192.168.1.102'}"   #Note: xx is the namespace, such as cx
+~~~
+
+
+
+### lidar power on/off(lidar still rotates,  only send equipment packets):
+
+source install/setup.bash
+
+power on：
+
+~~~bash
+ros2 service call /xx/lslidar_control lslidar_msgs/srv/LslidarControl "{laser_control: 1}"   #Note: xx is the namespace, such as cx
+~~~
+
+power off：
+
+~~~bash
+ros2 service call /xx/lslidar_control lslidar_msgs/srv/LslidarControl "{laser_control: 0}"   #Note: xx is the namespace, such as cx
+~~~
+
+
+
+### lidar rotates/stops rotating (motor stops rotating)：
+
+source install/setup.bash
+
+turn：
+
+~~~bash
+ros2 service call /xx/motor_control lslidar_msgs/srv/MotorControl "{motor_control: 1}"   #Note: xx is the namespace, such as cx
+~~~
+
+Stop rotating：
+
+~~~bash
+ros2 service call /xx/motor_control lslidar_msgs/srv/MotorControl "{motor_control: 0}"   #Note: xx is the namespace, such as cx
+~~~
+
+
+
+### Set lidar speed:
+
+source install/setup.bash
+
+Optional frequency  5Hz/10Hz/20Hz
+
+~~~bash
+ros2 service call /xx/set_motor_speed lslidar_msgs/srv/MotorSpeed "{motor_speed: 20}"   #Note: xx is the namespace, such as cx
+~~~
+
+
+
+### Set lidar data packet port
+
+source install/setup.bash
+
+~~~bash
+ros2 service call /xx/set_data_port lslidar_msgs/srv/DataPort "{data_port: 2368}"  #range[1025,65535]   #Note: xx is the namespace, such as cx
+~~~
+
+**Note: After setting, you need to modify the launch file parameters and restart the driver.**
+
+
+
+### Set lidar equipment packet port
+
+source install/setup.bash
+
+~~~bash
+ros2 service call /xx/set_dev_port lslidar_msgs/srv/DevPort "{dev_port: 2369}"#range[1025,65535]   #Note: xx is the namespace, such as cx
+~~~
+
+**Note: After setting, you need to modify the launch file parameters and restart the driver.**
+
+
+
+### Set lidar ip
+
+source install/setup.bash
+
+~~~bash
+ros2 service call /xx/set_data_ip lslidar_msgs/srv/DataIp "{data_ip: "192.168.1.200"}"   #Note: xx is the namespace, such as cx
+~~~
+
+**Note: After setting, you need to modify the launch file parameters and restart the driver.**
+
+
+
+### Set lidar destination ip
+
+source install/setup.bash
+
+~~~bash
+ros2 service call /xx/set_destination_ip lslidar_msgs/srv/DestinationIp "{destination_ip: "192.168.1.102"}"   #Note: xx is the namespace, such as cx
+~~~
+
+
+
+
+
 ## FAQ
 
 Bug Report
 
-version : LSLIDAR_CX_ 1212BYTES_V3.0.1_220719 ROS2
+Original version : LSLIDAR_CX_V4.0.0_221031_ROS2
 
 Modify:  original version
 
-Date    : 2022-07-19
+Date    : 2022-10-31
 
--------------------------------------------------------------------------------------------------------------------------
+-----------------
+
+Update version : LSLIDAR_CX_V4.1.0_221227_ROS2
+
+Modify:1. Scan topic adds strength information
+  2. fpga upgrade, C32 90 degree modification of calculation formula
+  3. ROS driver adds the function of modifying time service mode
+  4. New function to modify lidar configuration
+  5. Added support for ros2 dashing, ros2 eloquent, and ros2 humble
+  6. Fixed the ntp timing resolution problem.
+
+Date    : 2022-12-27
+
+-----------------
 
 
 
-Updated version: LSLIDAR_CX_V3.0.2_220809_ROS2
+Update version : LSLIDAR_CX_V4.2.2_230322_ROS2
 
-Modify:  1.Compatible with 1212 bytes and 1206 bytes C16 / C32 lidar(version 3.0 )
+Modify:1.Prompt for usage duration
 
-Date    : 2022-08-09
+​			   2.Driver version prompt
+
+Date    : 2023-03-22
+
+-------------------
+
+
+
+Update version : LSLIDAR_CX_V4.2.3_230403_ROS2
+
+Modify: 1.Change the fpga protocol and modify the calculation formula of C32W
+
+Date    : 2023-04-03
 
 -------------------------
 
 
 
-Updated version : LSLIDAR_CX_V3.0.3_221118_ROS2
+Update version : LSLIDAR_CX_V4.2.4_240410_ROS2
 
-Modify:  1.Added support for ros2 humble/ros2 dashing / ros2 eloquent
-
-Date    : 2022-11-18
-
--------------------------
-
-
-
-Updated version : LSLIDAR_CX_V3.0.4_221228_ROS2
-
-Modify:  1.Fixed the problem of point cloud layering caused by negative C32 lidar compensation angle.
-
-Date    : 2022-11-18
-
-
-
-Updated version : LSLIDAR_CX_V3.0.4_221228_ROS2
-
-Modify:  Reduce cpu usage, boost library to standard library,point time to relative time .
-
-Date    : 2023-03-14
-
--------------
-
-
-
+Modify:  1.Optimize code to reduce CPU usage
+        	   2.supports negative angle cropping
+        	   3.Delete the idar model parameters and rewrite the automatic recognition lidar model
+        	   4.Compatible with C16 C32 3.0 version, C1 C1Plus C4 C8F CKM8 C16 domestic version C32WN C32WB 4.0 version, CH32R 4.8 version, N301 5.5 version lidar
+      	     5.Solve the problem of continuous zero crossing angle between two adjacent data packet points in 3.0 lidar, and fix the inability of 3.0 lidar to power on and off
+       	    6.Restrict the range of lidar IP settings and prohibit setting 224 network segments as lidar IPs
+Date    : 2024-04-10

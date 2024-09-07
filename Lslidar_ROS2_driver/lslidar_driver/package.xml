@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>lslidar_driver</name>
-  <version>1.0.0</version>
+  <version>4.2.3</version>
 
   <maintainer email="tongsky723@sina.com">tongsky</maintainer>
   <author>Yutong</author>
@@ -34,8 +34,6 @@
   <exec_depend>lslidar_msgs</exec_depend>
   <exec_depend>libpcap</exec_depend>
 
-
-  <depend>diagnostic_updater</depend>
   <export>
     <build_type>ament_cmake</build_type>
   </export>

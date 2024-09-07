@@ -3,7 +3,6 @@
 
 extern volatile sig_atomic_t flag;
 namespace lslidar_driver {
-//    static const size_t packet_size = sizeof(lslidar_msgs::msg::LslidarPacket().data);
 ////////////////////////////////////////////////////////////////////////
 // Input base class implementation
 ////////////////////////////////////////////////////////////////////////
@@ -13,27 +12,15 @@ namespace lslidar_driver {
  *  @param private_nh ROS private handle for calling node.
  *  @param port UDP port number.
  */
-    Input::Input(rclcpp::Node *private_nh, uint16_t port) : private_nh_(private_nh), port_(port) {
+    Input::Input(rclcpp::Node *private_nh, uint16_t port, int packet_size) : private_nh_(private_nh), port_(port) ,packet_size_(packet_size){
         npkt_update_flag_ = false;
-        cur_rpm_ = 0;
         return_mode_ = 1;
-        packet_size_=1212;
-//        private_nh->declare_parameter<std::string>("device_ip", "");
-//        private_nh->declare_parameter<bool>("add_multicast", false);
-//        private_nh->declare_parameter<std::string>("group_ip", "224.1.1.2");
-//        private_nh->declare_parameter<int>("packet_size", 1206);
 
         private_nh->get_parameter("device_ip", devip_str_);
         private_nh->get_parameter("add_multicast", add_multicast);
         private_nh->get_parameter("group_ip", group_ip);
         private_nh->get_parameter("packet_size", packet_size_);
-		RCLCPP_INFO(private_nh->get_logger(), "line: %d,packet size: %d ",__LINE__,packet_size_);
-
-        if (!devip_str_.empty())
-            RCLCPP_INFO(private_nh->get_logger(), "[driver][input] accepting packets from IP address: %s  port: %d",
-                        devip_str_.c_str(),port);
     }
-
 
 ////////////////////////////////////////////////////////////////////////
 // InputSocket class implementation
@@ -44,14 +31,14 @@ namespace lslidar_driver {
    *  @param private_nh ROS private handle for calling node.
    *  @param port UDP port number
 */
-    InputSocket::InputSocket(rclcpp::Node *private_nh, uint16_t port) : Input(private_nh, port) {
+    InputSocket::InputSocket(rclcpp::Node *private_nh, uint16_t port,int packet_size) : Input(private_nh, port,packet_size) {
         sockfd_ = -1;
 
         if (!devip_str_.empty()) {
             inet_aton(devip_str_.c_str(), &devip_);
         }
 
-        RCLCPP_INFO(private_nh_->get_logger(), "[driver][socket] Opening UDP socket: port %d", port);
+        // LS_SOCKET << "Opening UDP socket port: " << port << LS_END;
         sockfd_ = socket(PF_INET, SOCK_DGRAM, 0);
         if (sockfd_ == -1) {
             perror("socket");  // TODO: ROS_ERROR errno
@@ -108,66 +95,42 @@ namespace lslidar_driver {
 
         sockaddr_in sender_address{};
         socklen_t sender_address_len = sizeof(sender_address);
-        while (flag == 1)
-            // while (true)
-        {
+        while (flag == 1) {
             // Receive packets that should now be available from the
             // socket using a blocking read.
             // poll() until input available
             do {
                 int retval = poll(fds, 1, POLL_TIMEOUT);
-                if (retval < 0)  // poll() error?
-                {
-                    if (errno != EINTR)
-                        RCLCPP_ERROR(private_nh_->get_logger(), "[driver][socket] poll() error: %s", strerror(errno));
-                    return 1;
-                }
                 if (retval == 0)  // poll() timeout?
                 {
                     time_t curTime = time(NULL);
                     struct tm *curTm = localtime(&curTime);
-                    char bufTime[30] = {0};
+                    char bufTime[72] = {0};
                     sprintf(bufTime, "%d-%d-%d %d:%d:%d", curTm->tm_year + 1900, curTm->tm_mon + 1,
                             curTm->tm_mday, curTm->tm_hour, curTm->tm_min, curTm->tm_sec);
-
-                    RCLCPP_WARN(private_nh_->get_logger(), "%s  lslidar poll() timeout, port: %d", bufTime,port_);
-                    /*
-                    char buffer_data[8] = "re-con";
-                    memset(&sender_address, 0, sender_address_len);          // initialize to zeros
-                    sender_address.sin_family = AF_INET;                     // host byte order
-                    sender_address.sin_port = htons(MSOP_DATA_PORT_NUMBER);  // port in network byte order, set any value
-                    sender_address.sin_addr.s_addr = devip_.s_addr;          // automatically fill in my IP
-                    sendto(sockfd_, &buffer_data, strlen(buffer_data), 0, (sockaddr*)&sender_address, sender_address_len);
-                    */
+                    LS_WARN << bufTime << " lslidar poll() timeout, port: " << port_ << LS_END;
                     return 1;
                 }
-                if ((fds[0].revents & POLLERR) || (fds[0].revents & POLLHUP) ||
-                    (fds[0].revents & POLLNVAL))  // device error?
+                if (retval < 0)  // poll() error?
                 {
-                    RCLCPP_ERROR(private_nh_->get_logger(),"poll() reports lslidar error");
+                    if (errno != EINTR)
+                        LS_ERROR << "[driver][socket] poll() error: " << strerror(errno) << LS_END;
                     return 1;
-                }
+                }  
             } while ((fds[0].revents & POLLIN) == 0);
+
             ssize_t nbytes = recvfrom(sockfd_, &pkt->data[0], packet_size_, 0, (sockaddr * ) & sender_address,
                                       &sender_address_len);
 
-            if (nbytes < 0) {
-                if (errno != EWOULDBLOCK) {
-                    perror("recvfail");
-                    RCLCPP_ERROR(private_nh_->get_logger(),"recvfail");
-                    return 1;
-                }
-            } else if ((size_t) nbytes == packet_size_) {
-                if (devip_str_ != "" && sender_address.sin_addr.s_addr != devip_.s_addr) {
-                    RCLCPP_ERROR(private_nh_->get_logger(), "lidar IP parameter set error,please reset in launch file");
-                    continue;
-                } else
-                    break;  // done
+            if (nbytes == packet_size_ || nbytes == 1206) {
+                break;  // done
+            } else {
+                continue;
             }
-            RCLCPP_WARN(private_nh_->get_logger(), "[driver][socket] incomplete lslidar packet read: %d bytes", nbytes);
         }
+
         if (flag == 0) {
-            abort();
+            throw std::runtime_error("Signal received, process terminated.");
         }
 
         return 0;
@@ -184,38 +147,34 @@ namespace lslidar_driver {
    *  @param packet_rate expected device packet frequency (Hz)
    *  @param filename PCAP dump file name
    */
-    InputPCAP::InputPCAP(rclcpp::Node *private_nh, uint16_t port, double packet_rate, std::string filename)
-            : Input(private_nh, port), packet_rate_(packet_rate), filename_(filename) {
+    InputPCAP::InputPCAP(rclcpp::Node *private_nh, uint16_t port, int packet_size, double packet_rate, std::string filename)
+            : Input(private_nh, port,packet_size), packet_rate_(packet_rate), filename_(filename) {
         pcap_ = NULL;
         empty_ = true;
         read_once_ = false;
         read_fast_ = false;
         repeat_delay_ = 0.0;
-//        private_nh->declare_parameter<bool>("read_once", false);
-//        private_nh->declare_parameter<bool>("read_fast", false);
-//        private_nh->declare_parameter<double>("repeat_delay", 0.0);
 
         private_nh->get_parameter("read_once", read_once_);
         private_nh->get_parameter("read_fast", read_fast_);
         private_nh->get_parameter("repeat_delay", repeat_delay_);
 
         if (read_once_)
-            RCLCPP_WARN(private_nh_->get_logger(),"Read input file only once.");
+            LS_WARN << "Read input file only once." << LS_END;
         if (read_fast_)
-            RCLCPP_WARN(private_nh_->get_logger(),"Read input file as quickly as possible.");
+            LS_WARN << "Read input file as quickly as possible." << LS_END;
         if (repeat_delay_ > 0.0)
-            RCLCPP_WARN(private_nh_->get_logger(),"Delay %.3f seconds before repeating input file.", repeat_delay_);
+            LS_WARN << "Delay " << repeat_delay_ << " seconds before repeating input file." << LS_END;
 
         // Open the PCAP dump file
-        // ROS_INFO("Opening PCAP file \"%s\"", filename_.c_str());
-        RCLCPP_WARN(private_nh_->get_logger(),"Opening PCAP file %s",filename_.c_str());
+        LS_PCAP << "Opening PCAP file: " << filename_.c_str() << LS_END;
         if ((pcap_ = pcap_open_offline(filename_.c_str(), errbuf_)) == NULL) {
-            RCLCPP_WARN(private_nh_->get_logger(),"Error opening lslidar socket dump file.");
+            LS_ERROR << "Error opening lslidar socket dump file." << LS_END;
             return;
         }
 
         std::stringstream filter;
-        if (devip_str_ != "")  // using specific IP?
+        if (!devip_str_.empty())  // using specific IP?
         {
             filter << "src host " << devip_str_ << " && ";
         }
@@ -233,7 +192,6 @@ namespace lslidar_driver {
         struct pcap_pkthdr *header;
         const u_char *pkt_data;
 
-        // while (flag == 1)
         while (flag == 1) {
             int res;
             if ((res = pcap_next_ex(pcap_, &header, &pkt_data)) >= 0) {
@@ -243,38 +201,31 @@ namespace lslidar_driver {
                     continue;
 
                 // Keep the reader from blowing through the file.
-                if (read_fast_ == false)
-                    packet_rate_.sleep();
-
-
+                if (read_fast_ == false) packet_rate_.sleep();
+                    
                 memcpy(&pkt->data[0], pkt_data + 42, packet_size_);
 
-                if (pkt->data[0] == 0xA5 && pkt->data[1] == 0xFF && pkt->data[2] == 0x00 &&
-                    pkt->data[3] == 0x5A) {//difop
-                    int rpm = (pkt->data[8] << 8) | pkt->data[9];
-                    RCLCPP_WARN_ONCE(private_nh_->get_logger(),"lidar rpm: %d", rpm);
-                }
                 empty_ = false;
                 return 0;  // success
             }
 
             if (empty_)  // no data in file?
             {
-                RCLCPP_WARN(private_nh_->get_logger(),"Error %d reading lslidar packet: %s", res, pcap_geterr(pcap_));
+                LS_ERROR << "Error " << res << " reading lslidar packet: " << pcap_geterr(pcap_) << LS_END;
                 return -1;
             }
 
             if (read_once_) {
-                RCLCPP_WARN(private_nh_->get_logger(),"end of file reached -- done reading.");
+                LS_PCAP << "end of file reached -- done reading." << LS_END;
                 return -1;
             }
 
             if (repeat_delay_ > 0.0) {
-                RCLCPP_WARN(private_nh_->get_logger(),"end of file reached -- delaying %.3f seconds.", repeat_delay_);
+                LS_PCAP << "end of file reached -- delaying " << repeat_delay_ << "seconds." << LS_END;
                 usleep(rint(repeat_delay_ * 1000000.0));
             }
 
-            RCLCPP_WARN(private_nh_->get_logger(),"replaying lslidar dump file");
+            LS_PCAP << "replaying lslidar dump file." << LS_END;
 
             // I can't figure out how to rewind the file, because it
             // starts with some kind of header.  So, close the file
@@ -285,8 +236,9 @@ namespace lslidar_driver {
         }                 // loop back and try again
 
         if (flag == 0) {
-            abort();
+            throw std::runtime_error("Signal received, process terminated.");
         }
-        return 0;
+        
+  		return 0;
     }
 }
